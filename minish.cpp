@@ -12,12 +12,14 @@
 #define MINISH_VERSION "0.0.1"
 #define MAX_DIR_NAME 126
 
-void minish_version() {
+int minish_version() {
     printf("minish, version: %s\n", MINISH_VERSION);
+    return 0;
 }
 
-void minish_help() {
+int minish_help() {
     printf("minish is incomplete shell.\n\t-h: help\n\t-v: version\n\t-c: exec command\n");
+    return 0;
 }
 
 void minish_chdir(std::vector<char *> args) {
@@ -92,46 +94,60 @@ std::string minish_input(char dirname[MAX_DIR_NAME]) {
 
     getcwd(dirname, MAX_DIR_NAME);
     printf("%s\n$ ",dirname);
-    std::getline(std::cin, input, '\n');
+    std::getline(std::cin, input);
 
     return input;
 }
 
-void minish() {
-    char curdir[MAX_DIR_NAME];
-    while (1) {
-        std::vector<char *> args = input2args(minish_input(curdir));
-        minish_find(args);
-        minish_free(args);
-        std::vector<char *>().swap(args);
+void minish_interpreter(std::string line) {
+    std::vector<char *> args = input2args(line);
+    minish_find(args);
+    minish_free(args);
+    std::vector<char *>().swap(args);
+}
+
+int minish_file(char *file) {
+    std::ifstream file_s(file);
+    std::string line;
+    std::vector<char *> args;
+    if (file_s.fail()) {
+        printf("error: invalid argument '%s'\n", file);
+        return 1;
+    } else {
+        while (std::getline(file_s, line)) {
+            minish_interpreter(line);
+        }
+        return 0;
     }
+}
+
+int minish() {
+    char curdir[MAX_DIR_NAME];
+    while (1) { minish_interpreter(minish_input(curdir)); }
+    return 0;
 }
 
 int main(int argc, char **argv) {
     if (argc == 1) {
-        minish();
+        return minish();
     } else if (argv[1][0] == '-') {
         if (strcmp(argv[1],"-h") == 0) {
-            minish_help();
+            return minish_help();
         } else if (strcmp(argv[1],"-v") == 0) {
-            minish_version();
+            return minish_version();
         } else if (strcmp(argv[1],"-c") == 0) {
             if (argv[2] == NULL) {
                 printf("error: argument missing\n");
                 return 1;
             }
             std::string code = argv[2];
-            std::vector<char *> args = input2args(code);
-            minish_find(args);
-            minish_free(args);
-            std::vector<char *>().swap(args);
+            minish_interpreter(code);
+            return 0;
         } else {
-            printf("error: Invalid option '%s'\n", argv[1]);
+            printf("error: invalid option '%s'\n", argv[1]);
             return 1;
         }
     } else {
-        std::ifstream ifs(argv[1]);
-        printf("");
+        return minish_file(argv[1]);
     }
-    return 0;
 }
