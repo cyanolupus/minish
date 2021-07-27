@@ -37,7 +37,9 @@ void minish_exec(std::vector<char *> args) {
     pid = fork();
 
     if (pid == 0) {
-        execvp(args[0], &args[0]);
+        if (execvp(args[0], &args[0]) == -1) {
+            printf("error: Unknown command \'%s\'\n", args[0]);
+        }
         exit(1);
     } else if (pid < 0) {
         printf("error: fork failed");
