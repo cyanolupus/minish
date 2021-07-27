@@ -9,7 +9,7 @@
 #include <cstring>
 #include <fstream>
 
-#define MINISH_VERSION "0.0.1"
+#define MINISH_VERSION "0.0.2"
 #define MAX_DIR_NAME 126
 
 int minish_version() {
