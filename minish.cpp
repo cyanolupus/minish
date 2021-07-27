@@ -7,8 +7,10 @@
 #include <sstream>
 #include <vector>
 #include <cstring>
+#include <fstream>
 
 #define MINISH_VERSION "0.0.1"
+#define MAX_DIR_NAME 126
 
 void minish_version() {
     printf("minish, version: %s\n", MINISH_VERSION);
@@ -46,7 +48,9 @@ void minish_exec(std::vector<char *> args) {
 }
 
 void minish_find(std::vector<char *> args) {
-    if (strcmp(args[0],"exit") == 0) {
+    if (args.size() <= 1) {
+        return;
+    } else if (strcmp(args[0],"exit") == 0) {
         exit(0);
     } else if (strcmp(args[0],"cd") == 0) {
         minish_chdir(args);
@@ -83,17 +87,21 @@ std::vector<char *> input2args(std::string input) {
     return args;
 }
 
+std::string minish_input(char dirname[MAX_DIR_NAME]) {
+    std::string input;
+
+    getcwd(dirname, MAX_DIR_NAME);
+    printf("%s\n$ ",dirname);
+    std::getline(std::cin, input, '\n');
+
+    return input;
+}
+
 void minish() {
-    char curdir[512];
+    char curdir[MAX_DIR_NAME];
     while (1) {
-        getcwd(curdir, 512);
-        printf("%s\n$ ",curdir);
-        std::string input;
-        std::getline(std::cin, input, '\n');
-        std::vector<char *> args = input2args(input);
-        if (args.size() > 1) {
-            minish_find(args);
-        }
+        std::vector<char *> args = input2args(minish_input(curdir));
+        minish_find(args);
         minish_free(args);
         std::vector<char *>().swap(args);
     }
@@ -102,23 +110,28 @@ void minish() {
 int main(int argc, char **argv) {
     if (argc == 1) {
         minish();
-    } else if (strcmp(argv[1],"-h") == 0) {
-        minish_help();
-    } else if (strcmp(argv[1],"-v") == 0) {
-        minish_version();
-    } else if (strcmp(argv[1],"-c") == 0) {
-        if (argv[2] == NULL) {
-            printf("error: argument missing\n");
+    } else if (argv[1][0] == '-') {
+        if (strcmp(argv[1],"-h") == 0) {
+            minish_help();
+        } else if (strcmp(argv[1],"-v") == 0) {
+            minish_version();
+        } else if (strcmp(argv[1],"-c") == 0) {
+            if (argv[2] == NULL) {
+                printf("error: argument missing\n");
+                return 1;
+            }
+            std::string code = argv[2];
+            std::vector<char *> args = input2args(code);
+            minish_find(args);
+            minish_free(args);
+            std::vector<char *>().swap(args);
+        } else {
+            printf("error: Invalid option '%s'\n", argv[1]);
             return 1;
         }
-        std::string code = argv[2];
-        std::vector<char *> args = input2args(code);
-        if (args.size() > 1) {
-            minish_find(args);
-        }
     } else {
-        printf("error: Invalid option '%s'\n", argv[1]);
-        return 1;
+        std::ifstream ifs(argv[1]);
+        printf("");
     }
     return 0;
 }
