@@ -9,7 +9,7 @@
 #include <cstring>
 #include <fstream>
 
-#define MINISH_VERSION "0.2.0"
+#define MINISH_VERSION "0.2.1"
 #define MAX_DIR_NAME 126
 
 class Args {
@@ -45,23 +45,6 @@ private:
         }
     }
 
-    void findArgs() {
-        if (_args.size() <= 1) {
-            return;
-        } else if (strcmp(_args[0],"exit") == 0) {
-            exit(0);
-        } else if (strcmp(_args[0],"cd") == 0) {
-            minishChdir();
-        } else if (strcmp(_args[0],"exec") == 0) {
-            if (execvp(_args[1], &_args[1]) == -1) {
-                printf("error: Unknown command \'%s\'\n", _args[0]);
-                exit(1);
-            }
-        } else {
-            minishExec();
-        }
-    }
-
 public:
     Args(std::string string) {
         std::string arg;
@@ -88,8 +71,20 @@ public:
     }
 
     void interpreter() {
-        findArgs();
-        std::vector<char *>().swap(_args);
+        if (_args.size() <= 1) {
+            return;
+        } else if (strcmp(_args[0],"exit") == 0) {
+            exit(0);
+        } else if (strcmp(_args[0],"cd") == 0) {
+            minishChdir();
+        } else if (strcmp(_args[0],"exec") == 0) {
+            if (execvp(_args[1], &_args[1]) == -1) {
+                printf("error: Unknown command \'%s\'\n", _args[0]);
+                exit(1);
+            }
+        } else {
+            minishExec();
+        }
     }
 };
 
@@ -99,7 +94,7 @@ private:
     char curdir[MAX_DIR_NAME];
 
     Minish() {
-        printf("welcome to minish\n");
+        
     }
     
     void minishVersion(void) {
@@ -120,7 +115,7 @@ public:
 
     void start(void) {
         std::string input;
-
+        printf("welcome to minish\n");
         while (1) {
             getcwd(curdir, MAX_DIR_NAME);
             printf("%s\n$ ",curdir);
@@ -166,7 +161,7 @@ public:
 
 Minish* Minish::_minish = 0;
 
-void main(int argc, char **argv) {
+int main(int argc, char **argv) {
     Minish* minish = Minish::getInstance();
     if (argc == 1) {
         minish->start();
