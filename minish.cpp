@@ -12,7 +12,7 @@
 #define MINISH_VERSION "0.1.0"
 #define MAX_DIR_NAME 126
 
-class Minish {
+class Args {
 
 private:
     std::vector<char *> _args;
@@ -80,7 +80,7 @@ private:
     }
 
 public:
-    Minish() {
+    Args() {
         std::string input;
 
         getcwd(curdir, MAX_DIR_NAME);
@@ -90,7 +90,7 @@ public:
         string2Args(input);
     }
 
-    Minish(std::string string) {
+    Args(std::string string) {
         string2Args(string);
     }
 
@@ -104,7 +104,7 @@ public:
         return 0;
     }
 
-    ~Minish() {
+    ~Args() {
         for (int i = 0; i < _args.size(); i++) delete[] _args[i];
         std::vector<char *>().swap(_args);
     }
@@ -132,8 +132,8 @@ int minish_file(char *file) {
         return 1;
     } else {
         while (std::getline(file_s, line)) {
-            Minish minish(line);
-            minish.interpreter(); 
+            Args args(line);
+            args.interpreter(); 
         }
         return 0;
     }
@@ -141,8 +141,8 @@ int minish_file(char *file) {
 
 int minish() {
     while (1) { 
-        Minish minish;
-        minish.interpreter();
+        Args args;
+        args.interpreter();
     }
     return 0;
 }
@@ -160,8 +160,8 @@ int main(int argc, char **argv) {
                 printf("error: argument missing\n");
                 return 1;
             }
-            Minish minish(argv[2]);
-            minish.interpreter();
+            Args args(argv[2]);
+            args.interpreter();
             return 0;
         } else {
             printf("error: invalid option '%s'\n", argv[1]);
