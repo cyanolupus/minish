@@ -1,0 +1,1 @@
+minish: minish.cpp

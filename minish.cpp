@@ -13,10 +13,8 @@
 #define MAX_DIR_NAME 126
 
 class Args {
-
 private:
     std::vector<char *> _args;
-    char curdir[MAX_DIR_NAME];
 
     void minishExec(void) {
         pid_t pid;
@@ -47,7 +45,25 @@ private:
         }
     }
 
-    void string2Args(std::string string) {
+    void findArgs() {
+        if (_args.size() <= 1) {
+            return;
+        } else if (strcmp(_args[0],"exit") == 0) {
+            exit(0);
+        } else if (strcmp(_args[0],"cd") == 0) {
+            minishChdir();
+        } else if (strcmp(_args[0],"exec") == 0) {
+            if (execvp(_args[1], &_args[1]) == -1) {
+                printf("error: Unknown command \'%s\'\n", _args[0]);
+                exit(1);
+            }
+        } else {
+            minishExec();
+        }
+    }
+
+public:
+    Args(std::string string) {
         std::string arg;
         std::stringstream input_s(string);
         while(std::getline(input_s, arg, ' ')) {
@@ -56,52 +72,6 @@ private:
             _args.push_back(carg);
         }
         _args.push_back(NULL);
-    }
-
-    void findArgs() {
-        if (_args.size() <= 1) {
-            return;
-        } else if (strcmp(_args[0],"exit") == 0) {
-            exit(0);
-        } else if (strcmp(_args[0],"cd") == 0) {
-            minishChdir();
-        } else if (strcmp(_args[0],"help") == 0) {
-            minishHelp();
-        } else if (strcmp(_args[0],"version") == 0) {
-            minishVersion();
-        } else if (strcmp(_args[0],"exec") == 0) {
-            if (execvp(_args[1], &_args[1]) == -1) {
-                printf("error: Unknown command \'%s\'\n", _args[0]);
-            }
-            exit(1);
-        } else {
-            minishExec();
-        }
-    }
-
-public:
-    Args() {
-        std::string input;
-
-        getcwd(curdir, MAX_DIR_NAME);
-        printf("%s\n$ ",curdir);
-        std::getline(std::cin, input);
-
-        string2Args(input);
-    }
-
-    Args(std::string string) {
-        string2Args(string);
-    }
-
-    int minishVersion() {
-        printf("minish, version: %s\n", MINISH_VERSION);
-        return 0;
-    }
-
-    int minishHelp(void) {
-        printf("minish is incomplete shell.\n\t-h: help\n\t-v: version\n\t-c: exec command\n");
-        return 0;
     }
 
     ~Args() {
@@ -123,51 +93,86 @@ public:
     }
 };
 
-int minish_file(char *file) {
-    std::ifstream file_s(file);
-    std::string line;
-    std::vector<char *> args;
-    if (file_s.fail()) {
-        printf("error: invalid argument '%s'\n", file);
-        return 1;
-    } else {
-        while (std::getline(file_s, line)) {
-            Args args(line);
-            args.interpreter(); 
+class Minish {
+private:
+    static Minish* _minish;
+    char curdir[MAX_DIR_NAME];
+
+    Minish() {
+        printf("welcome to minish\n");
+    }
+    
+    void minishVersion(void) {
+        printf("minish, version: %s\n", MINISH_VERSION);
+    }
+
+    void minishHelp(void) {
+        printf("minish is incomplete shell.\n\t-h: help\n\t-v: version\n\t-c: exec command\n");
+    }
+
+public:
+    static Minish* getInstance() {
+        if (_minish == 0) {
+            _minish = new Minish;
         }
-        return 0;
+        return _minish;
     }
-}
 
-int minish() {
-    while (1) { 
-        Args args;
-        args.interpreter();
-    }
-    return 0;
-}
+    void start(void) {
+        std::string input;
 
-int main(int argc, char **argv) {
-    if (argc == 1) {
-        return minish();
-    } else if (argv[1][0] == '-') {
-        if (strcmp(argv[1],"-h") == 0) {
-            return 0;
-        } else if (strcmp(argv[1],"-v") == 0) {
-            return 0;
-        } else if (strcmp(argv[1],"-c") == 0) {
-            if (argv[2] == NULL) {
-                printf("error: argument missing\n");
-                return 1;
-            }
-            Args args(argv[2]);
+        while (1) {
+            getcwd(curdir, MAX_DIR_NAME);
+            printf("%s\n$ ",curdir);
+            std::getline(std::cin, input);
+            Args args(input);
             args.interpreter();
-            return 0;
-        } else {
-            printf("error: invalid option '%s'\n", argv[1]);
-            return 1;
         }
+    }
+
+    void start(char **option) {
+        if (strcmp(option[1],"-h") == 0) {
+            minishHelp();
+        } else if (strcmp(option[1],"-v") == 0) {
+            minishVersion();
+        } else if (strcmp(option[1],"-c") == 0) {
+            if (option[2] == NULL) {
+                printf("error: argument missing\n");
+                exit(1);
+            }
+            Args args(option[2]);
+            args.interpreter();
+        } else {
+            printf("error: invalid option '%s'\n", option[1]);
+            exit(1);
+        }
+    }
+
+    void start(char *file) {
+        std::ifstream file_s(file);
+        std::string line;
+        std::vector<char *> args;
+        if (file_s.fail()) {
+            printf("error: invalid argument '%s'\n", file);
+            exit(1);
+        } else {
+            while (std::getline(file_s, line)) {
+                Args args(line);
+                args.interpreter(); 
+            }
+        }
+    }
+};
+
+Minish* Minish::_minish = 0;
+
+void main(int argc, char **argv) {
+    Minish* minish = Minish::getInstance();
+    if (argc == 1) {
+        minish->start();
+    } else if (argv[1][0] == '-') {
+        minish->start(argv);
     } else {
-        return minish_file(argv[1]);
+        minish->start(argv[1]);
     }
 }
