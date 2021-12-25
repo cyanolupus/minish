@@ -9,7 +9,7 @@
 #include <cstring>
 #include <fstream>
 
-#define MINISH_VERSION "0.1.0"
+#define MINISH_VERSION "0.2.0"
 #define MAX_DIR_NAME 126
 
 class Args {
